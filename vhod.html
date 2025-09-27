@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Банк "Один в один" - Вход</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #8A2BE2;
+            --primary-dark: #4B0082;
+            --secondary: #1A1A1A;
+            --dark: #0F0F0F;
+            --text: #FFFFFF;
+            --text-secondary: #CCCCCC;
+            --success: #00C851;
+            --error: #ff4444;
+            --card-bg: #2D2D2D;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--secondary);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 0 0 15px 15px;
+            padding: 30px 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.error {
+            background-color: var(--error);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="header">
+            <h1>Банк "Один в один"</h1>
+            <p>Вход в систему</p>
+        </div>
+        
+        <div class="card">
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="fullname">ФИО</label>
+                    <input type="text" id="fullname" class="form-control" placeholder="Введите ваше ФИО" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="form-control" placeholder="Введите ваш email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" class="form-control" placeholder="Введите пароль" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="auth-button">
+                    <i class="fas fa-user-plus"></i> Зарегистрироваться
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="toggleAuthMode()">
+                    Уже есть аккаунт? Войти
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431",
+            measurementId: "G-T5N77WGWYP"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // App state
+        let isLoginMode = false;
+
+        // DOM elements
+        const authForm = document.getElementById('auth-form');
+        const authButton = document.getElementById('auth-button');
+        const notification = document.getElementById('notification');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auth form submission
+            authForm.addEventListener('submit', handleAuth);
+            
+            // Check if user is already logged in
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Redirect to main page if already authenticated
+                    window.location.href = 'index.html';
+                }
+            });
+        });
+
+        // Toggle between login and register modes
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            
+            if (isLoginMode) {
+                authButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
+                document.querySelector('button[onclick="toggleAuthMode()"]').textContent = 'Нет аккаунта? Зарегистрироваться';
+                document.querySelector('.header p').textContent = 'Вход в систему';
+            } else {
+                authButton.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+                document.querySelector('button[onclick="toggleAuthMode()"]').textContent = 'Уже есть аккаунт? Войти';
+                document.querySelector('.header p').textContent = 'Регистрация';
+            }
+        }
+
+        // Handle authentication
+        async function handleAuth(e) {
+            e.preventDefault();
+            
+            const fullname = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                if (isLoginMode) {
+                    // Login
+                    await auth.signInWithEmailAndPassword(email, password);
+                    showNotification('Вход выполнен успешно!', 'success');
+                    // Redirect will happen automatically due to auth state listener
+                } else {
+                    // Register
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Save user profile
+                    await db.collection('users').doc(user.uid).set({
+                        fullname: fullname,
+                        email: email,
+                        balance: 1000, // Starting balance
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showNotification('Регистрация выполнена успешно!', 'success');
+                    // Redirect will happen automatically due to auth state listener
+                }
+            } catch (error) {
+                showNotification(`Ошибка: ${error.message}`, 'error');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

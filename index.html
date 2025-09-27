@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Банк "ЯжМатГаз банк" - Главная</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #8A2BE2;
+            --primary-dark: #4B0082;
+            --secondary: #1A1A1A;
+            --dark: #0F0F0F;
+            --text: #FFFFFF;
+            --text-secondary: #CCCCCC;
+            --success: #00C851;
+            --error: #ff4444;
+            --card-bg: #2D2D2D;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--secondary);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            max-width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background-color: var(--dark);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .nav-tab i {
+            margin-right: 8px;
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            text-align: center;
+        }
+        
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .balance-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Button Styles */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--card-bg);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Transaction List */
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .transaction-info {
+            flex: 1;
+        }
+        
+        .transaction-amount {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .positive {
+            color: var(--success);
+        }
+        
+        .negative {
+            color: var(--error);
+        }
+        
+        /* User List */
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .user-info p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.error {
+            background-color: var(--error);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--text);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .balance-amount {
+                font-size: 2rem;
+            }
+            
+            .nav-tab {
+                font-size: 0.9rem;
+            }
+            
+            .nav-tab i {
+                margin-right: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>ЯжМатГаз банк</h1>
+            <p>Деньги с небес не падают, наверно...</p>
+        </div>
+        
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="dashboard">
+                <i class="fas fa-home"></i> Главная
+            </div>
+            <div class="nav-tab" data-tab="transfer">
+                <i class="fas fa-exchange-alt"></i> Перевод
+            </div>
+            <div class="nav-tab" data-tab="history">
+                <i class="fas fa-history"></i> История
+            </div>
+            <div class="nav-tab" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Выйти
+            </div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="content-section active">
+            <div class="card balance-card">
+                <div class="balance-label">Ваш баланс</div>
+                <div class="balance-amount" id="balance">0 ₽</div>
+                <div>Банк "Один в один"</div>
+            </div>
+            
+            <div class="card">
+                <h2>Быстрый доступ</h2>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="showSection('transfer')">
+                        <i class="fas fa-paper-plane"></i> Перевод
+                    </button>
+                    <button class="btn btn-secondary" onclick="showSection('history')">
+                        <i class="fas fa-list"></i> История
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Последние операции</h2>
+                <div id="recent-transactions">
+                    <!-- Transactions will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transfer Section -->
+        <div id="transfer" class="content-section">
+            <div class="card">
+                <h2>Перевод средств</h2>
+                <form id="transfer-form">
+                    <div class="form-group">
+                        <label for="recipient">ФИО получателя</label>
+                        <input type="text" id="recipient" class="form-control" placeholder="Введите ФИО получателя" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amount">Сумма перевода</label>
+                        <input type="number" id="amount" class="form-control" placeholder="Введите сумму" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Сообщение (необязательно)</label>
+                        <input type="text" id="message" class="form-control" placeholder="Назначение платежа">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Отправить деньги
+                    </button>
+                </form>
+            </div>
+            
+            <div class="card">
+                <h2>Контакты</h2>
+                <div id="users-list">
+                    <!-- Users will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Section -->
+        <div id="history" class="content-section">
+            <div class="card">
+                <h2>История операций</h2>
+                <div id="transactions-history">
+                    <!-- Full transaction history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431",
+            measurementId: "G-T5N77WGWYP"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // App state
+        let currentUser = null;
+
+        // DOM elements
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const contentSections = document.querySelectorAll('.content-section');
+        const balanceElement = document.getElementById('balance');
+        const transferForm = document.getElementById('transfer-form');
+        const notification = document.getElementById('notification');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation
+            navTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab')) {
+                    tab.addEventListener('click', function() {
+                        const tabId = this.getAttribute('data-tab');
+                        showSection(tabId);
+                    });
+                }
+            });
+            
+            // Transfer form submission
+            transferForm.addEventListener('submit', handleTransfer);
+            
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    loadDashboard();
+                } else {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'vhod.html';
+                }
+            });
+        });
+
+        // Show specific section
+        function showSection(sectionId) {
+            // Update navigation
+            navTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab')) {
+                    tab.classList.remove('active');
+                    if (tab.getAttribute('data-tab') === sectionId) {
+                        tab.classList.add('active');
+                    }
+                }
+            });
+            
+            // Update content
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === sectionId) {
+                    section.classList.add('active');
+                    
+                    // Load section-specific data
+                    if (sectionId === 'dashboard') {
+                        loadDashboard();
+                    } else if (sectionId === 'transfer') {
+                        loadUsers();
+                    } else if (sectionId === 'history') {
+                        loadTransactionHistory();
+                    }
+                }
+            });
+        }
+
+        // Handle money transfer
+        async function handleTransfer(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showNotification('Ошибка авторизации', 'error');
+                return;
+            }
+            
+            const recipientName = document.getElementById('recipient').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const message = document.getElementById('message').value;
+            
+            if (amount <= 0) {
+                showNotification('Введите корректную сумму', 'error');
+                return;
+            }
+            
+            try {
+                // Find recipient by name
+                const usersSnapshot = await db.collection('users')
+                    .where('fullname', '==', recipientName)
+                    .get();
+                
+                if (usersSnapshot.empty) {
+                    showNotification('Пользователь с таким ФИО не найден', 'error');
+                    return;
+                }
+                
+                const recipientDoc = usersSnapshot.docs[0];
+                const recipientId = recipientDoc.id;
+                
+                if (recipientId === currentUser.uid) {
+                    showNotification('Нельзя переводить деньги самому себе', 'error');
+                    return;
+                }
+                
+                // Get current user data
+                const currentUserDoc = await db.collection('users').doc(currentUser.uid).get();
+                const currentUserData = currentUserDoc.data();
+                
+                if (currentUserData.balance < amount) {
+                    showNotification('Недостаточно средств на счете', 'error');
+                    return;
+                }
+                
+                // Perform transaction
+                const batch = db.batch();
+                
+                // Update sender balance
+                const senderRef = db.collection('users').doc(currentUser.uid);
+                batch.update(senderRef, {
+                    balance: firebase.firestore.FieldValue.increment(-amount)
+                });
+                
+                // Update recipient balance
+                const recipientRef = db.collection('users').doc(recipientId);
+                batch.update(recipientRef, {
+                    balance: firebase.firestore.FieldValue.increment(amount)
+                });
+                
+                // Record transaction
+                const transactionRef = db.collection('transactions').doc();
+                batch.set(transactionRef, {
+                    senderId: currentUser.uid,
+                    senderName: currentUserData.fullname,
+                    recipientId: recipientId,
+                    recipientName: recipientName,
+                    amount: amount,
+                    message: message,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                await batch.commit();
+                
+                // Reset form
+                transferForm.reset();
+                
+                showNotification('Перевод выполнен успешно!', 'success');
+                
+                // Update UI
+                loadDashboard();
+            } catch (error) {
+                showNotification(`Ошибка перевода: ${error.message}`, 'error');
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            if (!currentUser) return;
+            
+            await loadUserData();
+            await loadRecentTransactions();
+        }
+
+        // Load user data
+        async function loadUserData() {
+            if (!currentUser) return;
+            
+            try {
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    balanceElement.textContent = `${userData.balance} ₽`;
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        // Load recent transactions
+        async function loadRecentTransactions() {
+            if (!currentUser) return;
+            
+            try {
+                const transactionsSnapshot = await db.collection('transactions')
+                    .where('senderId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(5)
+                    .get();
+                
+                const receivedSnapshot = await db.collection('transactions')
+                    .where('recipientId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(5)
+                    .get();
+                
+                const allTransactions = [];
+                
+                transactionsSnapshot.forEach(doc => {
+                    allTransactions.push({...doc.data(), id: doc.id, type: 'sent'});
+                });
+                
+                receivedSnapshot.forEach(doc => {
+                    allTransactions.push({...doc.data(), id: doc.id, type: 'received'});
+                });
+                
+                // Sort by timestamp and take latest 5
+                allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+                const recentTransactions = allTransactions.slice(0, 5);
+                
+                const transactionsContainer = document.getElementById('recent-transactions');
+                transactionsContainer.innerHTML = '';
+                
+                if (recentTransactions.length === 0) {
+                    transactionsContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">Нет операций</p>';
+                    return;
+                }
+                
+                recentTransactions.forEach(transaction => {
+                    const transactionElement = document.createElement('div');
+                    transactionElement.className = 'transaction-item';
+                    
+                    const isSent = transaction.type === 'sent';
+                    const otherParty = isSent ? transaction.recipientName : transaction.senderName;
+                    const amountClass = isSent ? 'negative' : 'positive';
+                    const amountPrefix = isSent ? '-' : '+';
+                    
+                    transactionElement.innerHTML = `
+                        <div class="transaction-info">
+                            <div>${isSent ? 'Перевод' : 'Получение'} ${otherParty}</div>
+                            <small>${formatDate(transaction.timestamp?.toDate())}</small>
+                            ${transaction.message ? `<div><small>${transaction.message}</small></div>` : ''}
+                        </div>
+                        <div class="transaction-amount ${amountClass}">${amountPrefix}${transaction.amount} ₽</div>
+                    `;
+                    
+                    transactionsContainer.appendChild(transactionElement);
+                });
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        // Load users for transfer
+        async function loadUsers() {
+            if (!currentUser) return;
+            
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                const usersContainer = document.getElementById('users-list');
+                usersContainer.innerHTML = '';
+                
+                usersSnapshot.forEach(doc => {
+                    if (doc.id === currentUser.uid) return; // Skip current user
+                    
+                    const userData = doc.data();
+                    const userElement = document.createElement('div');
+                    userElement.className = 'user-item';
+                    userElement.onclick = () => {
+                        document.getElementById('recipient').value = userData.fullname;
+                    };
+                    
+                    userElement.innerHTML = `
+                        <div class="user-info">
+                            <h3>${userData.fullname}</h3>
+                            <p>${userData.email}</p>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+                    `;
+                    
+                    usersContainer.appendChild(userElement);
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Load transaction history
+        async function loadTransactionHistory() {
+            if (!currentUser) return;
+            
+            try {
+                const sentSnapshot = await db.collection('transactions')
+                    .where('senderId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                
+                const receivedSnapshot = await db.collection('transactions')
+                    .where('recipientId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                
+                const allTransactions = [];
+                
+                sentSnapshot.forEach(doc => {
+                    allTransactions.push({...doc.data(), id: doc.id, type: 'sent'});
+                });
+                
+                receivedSnapshot.forEach(doc => {
+                    allTransactions.push({...doc.data(), id: doc.id, type: 'received'});
+                });
+                
+                // Sort by timestamp
+                allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+                
+                const historyContainer = document.getElementById('transactions-history');
+                historyContainer.innerHTML = '';
+                
+                if (allTransactions.length === 0) {
+                    historyContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">Нет операций</p>';
+                    return;
+                }
+                
+                allTransactions.forEach(transaction => {
+                    const transactionElement = document.createElement('div');
+                    transactionElement.className = 'transaction-item';
+                    
+                    const isSent = transaction.type === 'sent';
+                    const otherParty = isSent ? transaction.recipientName : transaction.senderName;
+                    const amountClass = isSent ? 'negative' : 'positive';
+                    const amountPrefix = isSent ? '-' : '+';
+                    
+                    transactionElement.innerHTML = `
+                        <div class="transaction-info">
+                            <div>${isSent ? 'Перевод' : 'Получение'} ${otherParty}</div>
+                            <small>${formatDate(transaction.timestamp?.toDate())}</small>
+                            ${transaction.message ? `<div><small>${transaction.message}</small></div>` : ''}
+                        </div>
+                        <div class="transaction-amount ${amountClass}">${amountPrefix}${transaction.amount} ₽</div>
+                    `;
+                    
+                    historyContainer.appendChild(transactionElement);
+                });
+            } catch (error) {
+                console.error('Error loading transaction history:', error);
+            }
+        }
+
+        // Logout function
+        function logout() {
+            auth.signOut();
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Format date
+        function formatDate(date) {
+            if (!date) return '';
+            
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 1) return 'только что';
+            if (diffMins < 60) return `${diffMins} мин назад`;
+            if (diffHours < 24) return `${diffHours} ч назад`;
+            if (diffDays === 1) return 'вчера';
+            if (diffDays < 7) return `${diffDays} дн назад`;
+            
+            return date.toLocaleDateString('ru-RU');
+        }
+    </script>
+</body>
+</html>
